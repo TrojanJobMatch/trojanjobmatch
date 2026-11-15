@@ -70,20 +70,19 @@ export function DashboardShell() {
       </header>
 
       <div className="container-tm -mt-8 md:flex md:min-h-0 md:flex-1 md:flex-col">
-        {/* Tablet and up: agent chat and resume side by side, same height. */}
-        <div className="grid grid-cols-1 gap-6 md:mb-6 md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,1fr)_280px] md:grid-rows-[minmax(0,1fr)] md:gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <AgentPanel onJobsChanged={() => setRefreshKey((k) => k + 1)} />
-          <div className="relative">
-            <div className="md:absolute md:inset-0">
-              <ResumeCard
-                skills={me?.skills ?? []}
-                onSkillsChange={(skills) => {
-                  setMe((current) => (current ? { ...current, skills } : current));
-                  setRefreshKey((k) => k + 1);
-                }}
-              />
-            </div>
+        {/* Tablet and up: agent chat fills the screen, resume sits in one
+            horizontal row under it. */}
+        <div className="flex flex-col gap-6 md:mb-6 md:min-h-0 md:flex-1 md:gap-4">
+          <div className="md:flex md:min-h-0 md:flex-1 md:flex-col">
+            <AgentPanel onJobsChanged={() => setRefreshKey((k) => k + 1)} />
           </div>
+          <ResumeCard
+            skills={me?.skills ?? []}
+            onSkillsChange={(skills) => {
+              setMe((current) => (current ? { ...current, skills } : current));
+              setRefreshKey((k) => k + 1);
+            }}
+          />
         </div>
       </div>
       </div>
