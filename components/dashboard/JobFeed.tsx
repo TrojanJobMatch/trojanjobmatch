@@ -48,8 +48,14 @@ export function JobFeed({
   // Loading is derived: the feed is loading until a response for the
   // current query has arrived (no setState inside the effect body).
   const query = `${filterKey}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`;
-  const requestKey = `${query}#${refreshKey}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  // Bumped by "Update order" to load the feed again once more jobs are scored.
+  const [reorderKey, setReorderKey] = useState(0);
+  const requestKey = `${query}#${refreshKey}#${reorderKey}`;
+  // Jobs scored in the background since the feed last loaded.
+  const [newlyScored, setNewlyScored] = useState(0);
+  // The resume that background scoring last ran for (once per resume per visit).
+  const prescoredFor = useRef<number | null>(null);
   const loading = loadedKey !== requestKey;
 
   useEffect(() => {
@@ -63,6 +69,12 @@ export function JobFeed({
         setJobs(data.error ? [] : (data.jobs ?? []));
         setTotal(data.error ? 0 : (data.total ?? 0));
         setLoadedResumeKey(resumeKey);
+        setNewlyScored(0);
+        if (!data.error && prescoredFor.current !== resumeKey) {
+          prescoredFor.current = resumeKey;
+          const onScreen = ((data.jobs ?? []) as DashboardJob[]).map((job) => job.id);
+          void prescore(onScreen, resumeKey);
+        }
       })
       .catch(() => {
         if (!cancelled) setError("Couldn't load jobs.");
@@ -73,7 +85,25 @@ export function JobFeed({
     return () => {
       cancelled = true;
     };
-  }, [query, refreshKey, requestKey, resumeKey]);
+    // Scores the user's top jobs beyond this page, a batch per request, so
+    // other pages open with their fit already known. The cards on screen
+    // score themselves, so they are skipped here.
+    async function prescore(skip: number[], forResume: number) {
+      for (let round = 0; round < 4; round++) {
+        if (prescoredFor.current !== forResume) return; // the resume changed
+        const res = await fetch("/api/dashboard/prescore", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ skip }),
+        }).catch(() => null);
+        if (!res?.ok) return;
+        const data = await res.json().catch(() => ({}));
+        if (prescoredFor.current !== forResume) return;
+        if (data.scored > 0) setNewlyScored((n) => n + data.scored);
+        if (!(data.remaining > 0) || !(data.scored > 0)) return;
+      }
+    }
+  }, [query, refreshKey, requestKey, resumeKey, reorderKey]);
 
   const lastPage = Math.max(0, Math.ceil(total / PAGE_SIZE) - 1);
   function goTo(next: number, scroll: boolean) {
@@ -118,6 +148,21 @@ export function JobFeed({
 
   return (
     <div ref={topRef} className="flex scroll-mt-4 flex-col gap-3">
+      {newlyScored > 0 && filters.sort === "fit" && !loading && (
+        <p className="flex flex-wrap items-center gap-x-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-[13px] text-[var(--muted)]" role="status">
+          {newlyScored === 1 ? "1 more job has" : `${newlyScored} more jobs have`} a fit score now.
+          <button
+            type="button"
+            onClick={() => {
+              setPaging({ key: filterKey, page: 0 });
+              setReorderKey((k) => k + 1);
+            }}
+            className="font-semibold text-[var(--cardinal)] underline underline-offset-2"
+          >
+            Update order
+          </button>
+        </p>
+      )}
       {total > 0 && pager("top")}
       {body}
       {total > PAGE_SIZE && pager("bottom")}

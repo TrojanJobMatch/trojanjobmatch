@@ -5,6 +5,12 @@ import { useEffect, useState } from "react";
 import { DOMAINS, ROLE_TYPES } from "@/lib/dashboard/domains";
 import type { DashboardStats, JobFilters } from "@/lib/dashboard/types";
 
+const SORTS: { value: JobFilters["sort"]; label: string }[] = [
+  { value: "fit", label: "Best fit first" },
+  { value: "match", label: "Most skills matched" },
+  { value: "newest", label: "Newest first" },
+];
+
 const TABS: { value: JobFilters["decision"]; label: string }[] = [
   { value: "all", label: "All jobs" },
   { value: "saved", label: "Saved" },
@@ -73,14 +79,14 @@ export function Filters({
           );
         })}
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(4,minmax(0,1fr))]">
         <input
           type="search"
           aria-label="Search company or role"
           placeholder="Search company or role"
           value={filters.search}
           onChange={(event) => onChange({ ...filters, search: event.target.value })}
-          className="input sm:col-span-3 lg:col-span-1"
+          className="input sm:col-span-2 lg:col-span-1"
         />
         <select
           aria-label="Domain"
@@ -122,6 +128,18 @@ export function Filters({
           {ROLE_TYPES.map((t) => (
             <option key={t.key} value={t.key}>
               {t.label}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Sort jobs"
+          value={filters.sort}
+          onChange={(event) => onChange({ ...filters, sort: event.target.value as JobFilters["sort"] })}
+          className="input"
+        >
+          {SORTS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
             </option>
           ))}
         </select>

@@ -35,7 +35,8 @@ export interface JobFilters {
   decision: "all" | Decision;
   minMatch: number | null;
   search: string;
-  sort: "match" | "newest";
+  // "fit": AI fit score first, jobs not scored yet follow by skill match.
+  sort: "fit" | "match" | "newest";
   domain: string | null;
   level: "student" | "all";
   company: string | null;
@@ -46,7 +47,7 @@ export const DEFAULT_FILTERS: JobFilters = {
   decision: "all",
   minMatch: null,
   search: "",
-  sort: "match",
+  sort: "fit",
   domain: null,
   level: "student",
   company: null,

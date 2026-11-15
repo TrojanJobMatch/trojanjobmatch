@@ -8,7 +8,7 @@ import { isDomainKey, isRoleType } from "@/lib/dashboard/domains";
 // The shared job feed, seen through one user's eyes: their own decisions
 // (tm_decisions) and a match score from their own skills. Query params:
 // decision (all | saved | applied | not_interested), minMatch, search,
-// sort (match | newest), domain (see lib/dashboard/domains.ts),
+// sort (fit, the default: AI fit score, then skill match | match | newest), domain (see lib/dashboard/domains.ts),
 // level (student, the default, hides senior titles | all), limit (default 50, max 200),
 // offset (for paging). The response carries `total`, the count across all pages.
 export async function GET(request: NextRequest) {
@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
   const minMatch = Number.isFinite(minMatchParam) && minMatchParam > 0 ? Math.min(minMatchParam, 100) : null;
   const searchParam = params.get("search")?.trim();
   const searchPattern = searchParam ? `%${searchParam}%` : null;
-  const byMatch = params.get("sort") !== "newest";
+  const sortParam = params.get("sort");
+  const byFit = sortParam !== "newest" && sortParam !== "match";
+  const byMatch = sortParam !== "newest";
   const limit = Math.min(Number(params.get("limit")) || 50, 200);
   const offset = Math.max(0, Math.min(Math.floor(Number(params.get("offset")) || 0), 100000));
   const skills = user.skills ?? [];
@@ -58,8 +60,10 @@ export async function GET(request: NextRequest) {
     ) feed
     where ${minMatch}::int is null or feed.match >= ${minMatch}
     order by
+      case when ${byFit}::boolean then (feed.analysis->>'fit')::int end desc nulls last,
       case when ${byMatch}::boolean then feed.match end desc nulls last,
-      feed.created_at desc
+      feed.created_at desc,
+      feed.id desc
     limit ${limit} offset ${offset}
   `) as Record<string, unknown>[];
 
