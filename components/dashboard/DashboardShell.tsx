@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { Wordmark } from "@/components/auth/AuthShell";
 import { AgentPanel } from "@/components/dashboard/AgentPanel";
+import { EventsForYou } from "@/components/dashboard/EventsForYou";
 import { Filters } from "@/components/dashboard/Filters";
 import { JobFeed } from "@/components/dashboard/JobFeed";
 import { ProfileMenu, type Profile } from "@/components/dashboard/ProfileMenu";
@@ -94,6 +95,8 @@ export function DashboardShell() {
           <Filters filters={filters} onChange={setFilters} stats={stats} />
           <JobFeed filters={filters} refreshKey={refreshKey} resumeKey={resumeKey} onDecisionMade={() => setRefreshKey((k) => k + 1)} />
         </section>
+
+        <EventsForYou refreshKey={refreshKey} />
 
         <p className="text-center text-[13px] text-[var(--muted)]">
           A student project built at the AI@USC Hackathon. Not an official USC website.
