@@ -1,11 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Archivo_Black, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+// Fonts ship inside the app (open-source, OFL) so builds never depend on
+// reaching Google Fonts; a fresh Vercel build failed fetching them.
+const inter = localFont({ src: "./fonts/inter-latin-wght-normal.woff2", weight: "100 900", variable: "--font-inter", display: "swap" });
 // Heavy display face for the wordmark and big headline; Archivo 800 for form titles.
-const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400", variable: "--font-display", display: "swap" });
-const archivo = Archivo({ subsets: ["latin"], weight: ["700", "800"], variable: "--font-heading", display: "swap" });
+const archivoBlack = localFont({ src: "./fonts/archivo-black-latin-400-normal.woff2", weight: "400", variable: "--font-display", display: "swap" });
+const archivo = localFont({
+  src: [
+    { path: "./fonts/archivo-latin-700-normal.woff2", weight: "700" },
+    { path: "./fonts/archivo-latin-800-normal.woff2", weight: "800" },
+  ],
+  variable: "--font-heading",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Trojan JobMatch",
