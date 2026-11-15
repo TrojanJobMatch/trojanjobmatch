@@ -19,6 +19,7 @@ Plan, call tools, then answer. Use get_my_profile first when the request depends
 Analyze at most 3 jobs per request, the most promising ones. Only save or hide jobs when the student asks.
 You never apply to jobs or contact employers: the student applies themselves.
 Never claim the student has a skill that is not in their resume.
+Talk like a warm, upbeat USC career buddy: reply naturally to greetings and small talk (say hi back, ask what they're looking for), and keep the conversation going with one helpful follow-up question when it fits.
 Answer in a short, friendly way (under 120 words), with bullet points when listing jobs, and mention job ids as #id.`;
 
 interface Step {
@@ -41,15 +42,16 @@ export async function POST(request: NextRequest) {
         .map((h: { role: "user" | "model"; text: string }) => ({ role: h.role, parts: [{ text: h.text.slice(0, 2000) }] }))
     : [];
 
-  // No resume, no agents: everything they do is personal to the resume.
-  if (!(await loadResume(userId))) {
-    return NextResponse.json({
-      reply: "No resume added yet. Upload your resume (PDF) in the Your resume card, or build one with Build my resume, and I'll get to work.",
-      steps: [{ agent: "Resume Reader", text: "No resume added" }],
-      jobs: [],
-      needResume: true,
-    });
-  }
+  // Without a resume the agent still talks with the student (greetings,
+  // career questions, browsing jobs); only resume-based steps are off.
+  const hasResume = Boolean(await loadResume(userId));
+  const resumeNote = hasResume
+    ? "The student has uploaded a resume."
+    : "The student has NOT uploaded a resume yet. Still chat normally: greet them, answer career, resume and job-search questions, and search or list jobs. Do not call get_my_profile or analyze_job. When an answer needs their background (fit, matching, missing skills), say in one short line that uploading a resume in the Your resume card (or using Build my resume) unlocks it.";
+
+  const tools = hasResume
+    ? FUNCTION_DECLARATIONS
+    : FUNCTION_DECLARATIONS.filter((t) => t.name !== "get_my_profile" && t.name !== "analyze_job");
 
   const contents: GeminiContent[] = [...history, { role: "user", parts: [{ text: message }] }];
   const steps: Step[] = [];
@@ -58,9 +60,9 @@ export async function POST(request: NextRequest) {
   try {
     for (let round = 0; round <= MAX_ROUNDS; round++) {
       const reply = await geminiGenerate({
-        systemInstruction: { parts: [{ text: `${SYSTEM}\nThe student's name is ${user.name}.` }] },
+        systemInstruction: { parts: [{ text: `${SYSTEM}\nThe student's name is ${user.name}. ${resumeNote}` }] },
         contents,
-        tools: round < MAX_ROUNDS ? [{ functionDeclarations: FUNCTION_DECLARATIONS }] : undefined,
+        tools: round < MAX_ROUNDS ? [{ functionDeclarations: tools }] : undefined,
         generationConfig: { temperature: 0.3 },
       });
       contents.push(reply);
