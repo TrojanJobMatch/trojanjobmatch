@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { FUNCTION_DECLARATIONS, runTool, TOOL_AGENT, type AgentJob } from "@/lib/ai/agentTools";
+import { FUNCTION_DECLARATIONS, PREFERENCE_QUESTIONS, runTool, TOOL_AGENT, type AgentJob } from "@/lib/ai/agentTools";
 import { NoResumeError } from "@/lib/ai/analyze";
 import { loadResume } from "@/lib/ai/resume";
 import { GeminiError, geminiGenerate, type GeminiContent, type GeminiPart } from "@/lib/ai/gemini";
@@ -15,7 +15,8 @@ const SYSTEM = `You are JobMatch Agent, the coordinator of a small team of AI ag
 - Resume Reader (get_my_profile) knows the student's own resume.
 - Analyst (analyze_job) judges fit and eligibility for one job against the resume.
 - Tracker (list_my_jobs, save_job, hide_job) manages the student's lists.
-Plan, call tools, then answer. Use get_my_profile first when the request depends on the student's background, and pick search filters from it (domain, role type).
+Plan, call tools, then answer.
+Before searching for jobs, you need two things: the job type (internship, full-time, or all) and the timeline/season (spring, summer, fall, winter, or all). If the student asks for jobs and has not said BOTH in this chat, call ask_job_preferences and nothing else. Once they answer, search right away with those filters ("All of the above" means leave that filter out) and do not ask again in this chat. Use get_my_profile first when the request depends on the student's background, and pick search filters from it (domain, role type).
 Analyze at most 3 jobs per request, the most promising ones. Only save or hide jobs when the student asks.
 You never apply to jobs or contact employers: the student applies themselves.
 Never claim the student has a skill that is not in their resume.
@@ -67,6 +68,16 @@ export async function POST(request: NextRequest) {
       });
       contents.push(reply);
       const calls = reply.parts.filter((p): p is Extract<GeminiPart, { functionCall: unknown }> => "functionCall" in p);
+      // Clarifying questions end the turn: the student answers with buttons.
+      if (calls.some((c) => c.functionCall.name === "ask_job_preferences")) {
+        steps.push({ agent: "JobMatch Agent", text: "Asking what you're looking for" });
+        return NextResponse.json({
+          reply: `Quick questions so I pull the right jobs: ${PREFERENCE_QUESTIONS.map((q) => q.question).join(" ")}`,
+          questions: PREFERENCE_QUESTIONS,
+          steps,
+          jobs: [],
+        });
+      }
       if (calls.length === 0) {
         const text = reply.parts.map((p) => ("text" in p ? p.text : "")).join("").trim();
         return NextResponse.json({ reply: text || "Done.", steps, jobs: [...jobsById.values()].slice(0, 10) });

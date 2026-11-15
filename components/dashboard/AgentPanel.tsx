@@ -9,6 +9,53 @@ interface Turn {
   text: string;
   steps?: { agent: string; text: string }[];
   jobs?: AgentJob[];
+  questions?: Question[];
+}
+
+interface Question {
+  id: string;
+  question: string;
+  options: string[];
+}
+
+// Multiple-choice questions from the agent (job type, timeline). Once every
+// question has an answer, the answers are sent as the student's next message.
+function QuestionPicker({ questions, onDone }: { questions: Question[]; onDone: (answer: string) => void }) {
+  const [picked, setPicked] = useState<Record<string, string>>({});
+  function choose(id: string, option: string) {
+    const next = { ...picked, [id]: option };
+    setPicked(next);
+    if (questions.every((q) => next[q.id])) onDone(questions.map((q) => `${q.question} ${next[q.id]}.`).join(" "));
+  }
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 sm:p-4">
+      {questions.map((q) => (
+        <fieldset key={q.id} className="flex flex-col gap-2">
+          <legend className="mb-2 text-[14px] font-semibold">{q.question}</legend>
+          <div className="flex flex-wrap gap-2">
+            {q.options.map((option) => {
+              const active = picked[q.id] === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => choose(q.id, option)}
+                  className={`min-h-[36px] rounded-full px-4 text-[14px] font-semibold transition ${
+                    active
+                      ? "bg-[var(--cardinal-deep)] text-white"
+                      : "border border-[var(--border)] bg-[var(--background)] hover:border-[var(--cardinal)] hover:text-[var(--cardinal)]"
+                  }`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ))}
+    </div>
+  );
 }
 
 const STARTERS = [
@@ -73,7 +120,7 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
         body: JSON.stringify({ message, history }),
       });
       const data = await res.json().catch(() => ({}));
-      setTurns((t) => [...t, { role: "model", text: data.reply ?? data.error ?? "Something went wrong.", steps: data.steps ?? [], jobs: data.jobs ?? [] }]);
+      setTurns((t) => [...t, { role: "model", text: data.reply ?? data.error ?? "Something went wrong.", steps: data.steps ?? [], jobs: data.jobs ?? [], questions: data.questions }]);
       if ((data.steps ?? []).some((s: { agent: string }) => s.agent === "Tracker")) onJobsChanged();
     } catch {
       setTurns((t) => [...t, { role: "model", text: "Network error, try again." }]);
@@ -144,7 +191,18 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
                   ))}
                 </ol>
               )}
-              <Rich text={turn.text} />
+              {turn.questions && turn.questions.length > 0 ? (
+                i === turns.length - 1 && !busy ? (
+                  <>
+                    <p className="text-[15px]">Quick questions so I pull the right jobs:</p>
+                    <QuestionPicker questions={turn.questions} onDone={ask} />
+                  </>
+                ) : (
+                  <p className="text-[15px]">Quick questions so I pull the right jobs.</p>
+                )
+              ) : (
+                <Rich text={turn.text} />
+              )}
               {turn.jobs && turn.jobs.length > 0 && (
                 <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {turn.jobs.slice(0, 6).map((job) => (

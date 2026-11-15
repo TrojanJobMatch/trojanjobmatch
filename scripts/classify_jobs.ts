@@ -29,11 +29,16 @@ async function main() {
     when role ~* ${EXPERIENCED_PATTERN} then 'experienced'
     else 'general' end`;
   await sql`alter table jobs add column if not exists tm_type text`;
+  // Patterns go in as parameters: inside a JS template literal "\y" would
+  // silently turn into a plain "y" and the word boundaries would be lost.
+  const intern = "\\yinterns?\\y|internship|co-?op|apprentice";
+  const newGrad = "new grad|graduate|university|early career|entry|campus|junior";
+  const partTime = "part.?time";
   await sql`update jobs set tm_type = case
-    when role ~* '\yinterns?\y|internship|co-?op|apprentice' or type ilike '%intern%' then 'internship'
-    when role ~* 'new grad|graduate|university|early career|entry|campus|junior' or type ilike '%new grad%' then 'new_grad'
+    when role ~* ${intern} or type ilike '%intern%' then 'internship'
+    when role ~* ${newGrad} or type ilike '%new grad%' then 'new_grad'
     when role ~* 'contract' or type ilike '%contract%' then 'contract'
-    when role ~* 'part.?time' or type ilike '%part%' then 'part_time'
+    when role ~* ${partTime} or type ilike '%part%' then 'part_time'
     else 'full_time' end`;
   console.log(await sql`select tm_type, count(*)::int n from jobs group by 1`);
   console.log(await sql`select tm_domain, count(*)::int n, count(*) filter (where tm_level <> 'experienced')::int student from jobs group by 1 order by 2 desc`);
