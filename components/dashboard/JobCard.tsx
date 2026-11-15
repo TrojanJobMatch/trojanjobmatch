@@ -57,16 +57,9 @@ export function JobCard({
     <article className="card flex flex-col gap-2 px-4 py-3.5 sm:px-5 md:py-4">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate text-[16px] font-semibold leading-snug md:text-[17px]" title={job.role}>
-              {job.role}
-            </h3>
-            {job.match !== null && (
-              <span className="pill-gold shrink-0 text-[12px]" title="How many of your skills this job mentions">
-                {job.match}
-              </span>
-            )}
-          </div>
+          <h3 className="truncate text-[16px] font-semibold leading-snug md:text-[17px]" title={job.role}>
+            {job.role}
+          </h3>
           <p className="mt-0.5 flex min-w-0 items-center gap-2 text-[14px] text-[var(--muted)]">
             <span className="truncate">
               <span className="font-medium text-[var(--foreground)]">{job.company}</span>
