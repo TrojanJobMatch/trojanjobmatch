@@ -66,7 +66,7 @@ export function DashboardShell() {
           <h1 className="font-display mt-6 text-[30px] uppercase leading-none sm:text-[40px]">
             Fight on{firstName ? <>, <span className="text-[var(--gold)]">{firstName}</span></> : ""}.
           </h1>
-          <p className="mt-2 text-[15px] text-white/85 sm:text-[16px]">Every Trojan deserves the right match.</p>
+          <p className="mt-2 text-[15px] text-white/85 sm:text-[16px]">For Trojans, by Trojans.</p>
         </div>
       </header>
 
