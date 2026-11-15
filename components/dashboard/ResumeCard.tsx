@@ -78,22 +78,35 @@ export function ResumeCard({
     <input ref={inputRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
   );
 
+  const actions = (
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
+      <button
+        type="button"
+        onClick={evaluate}
+        disabled={busy !== null}
+        className="min-h-[44px] rounded-full bg-[var(--cardinal-deep)] px-4 text-[14px] font-bold text-white transition hover:bg-[var(--cardinal)] disabled:opacity-60"
+      >
+        🔎 Evaluate my resume
+      </button>
+      <a
+        href="/resume-builder"
+        className="flex min-h-[44px] items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-bold text-[var(--foreground)] transition hover:border-[var(--cardinal)] hover:text-[var(--cardinal)]"
+      >
+        ✍️ Build my resume
+      </a>
+    </div>
+  );
+
   return (
-    <section className="card p-4 sm:p-5">
+    <section className="card flex h-full flex-col gap-3 p-4 sm:p-5">
       {fileInput}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-baseline justify-between gap-3">
         <h2 className="font-heading text-[18px]">Your resume</h2>
-        <div className="flex items-center gap-3">
-          <span className="hidden text-[13px] text-[var(--muted)] lg:inline">Private to your account</span>
-          <button type="button" onClick={evaluate} disabled={busy !== null} className="rounded-full bg-[var(--cardinal-deep)] px-4 py-2 text-[14px] font-bold text-white disabled:opacity-60">
-            🔎 Evaluate my resume
-          </button>
-          <a href="/resume-builder" className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-[14px] font-bold text-black">✍️ Build my resume</a>
-        </div>
+        <span className="text-[12px] text-[var(--muted)]">🔒 Private to you</span>
       </div>
 
       {!loaded ? (
-        <p className="mt-3 text-[15px] text-[var(--muted)]">Loading…</p>
+        <p className="text-[15px] text-[var(--muted)] md:flex-1">Loading…</p>
       ) : !resume || busy === "upload" ? (
         <button
           type="button"
@@ -109,8 +122,8 @@ export function ResumeCard({
             setDragging(false);
             upload(e.dataTransfer.files?.[0]);
           }}
-          className={`mt-3 flex w-full flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed px-4 py-7 text-center ${
-            dragging ? "border-[var(--cardinal)] bg-[#fff5f5]" : "border-[#c9c9cc] bg-[var(--background)]"
+          className={`flex w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed px-4 py-6 text-center transition md:min-h-0 md:flex-1 ${
+            dragging ? "border-[var(--cardinal)] bg-[#fff5f5]" : "border-[#c9c9cc] bg-[var(--background)] hover:border-[var(--cardinal)]"
           }`}
         >
           {busy === "upload" ? (
@@ -120,13 +133,14 @@ export function ResumeCard({
             </>
           ) : (
             <>
+              <span aria-hidden className="text-[30px] leading-none">📄</span>
               <span className="text-[16px] font-semibold">Upload your resume (PDF)</span>
-              <span className="text-[14px] text-[var(--muted)]">Drop it here or click. Then press Evaluate and five AI agents review it like a recruiter.</span>
+              <span className="max-w-[300px] text-[14px] text-[var(--muted)]">Drop it here or click. Then press Evaluate and five AI agents review it like a recruiter.</span>
             </>
           )}
         </button>
       ) : (
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 rounded-2xl bg-[var(--background)] p-3">
           <div className="min-w-0">
             <p className="truncate text-[15px] font-semibold">📄 {resume.file_name}</p>
             <p className="text-[14px] text-[var(--muted)]">
@@ -134,27 +148,33 @@ export function ResumeCard({
             </p>
           </div>
           <div className="flex gap-2">
-            <button type="button" disabled={busy !== null} onClick={() => inputRef.current?.click()} className="btn btn-secondary min-h-[40px] px-4 text-[14px]">
+            <button type="button" disabled={busy !== null} onClick={() => inputRef.current?.click()} className="rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-[13px] font-semibold transition hover:border-[var(--cardinal)] hover:text-[var(--cardinal)] disabled:opacity-60">
               Replace
             </button>
-            <button type="button" disabled={busy !== null} onClick={remove} className="btn btn-secondary min-h-[40px] px-4 text-[14px]">
+            <button type="button" disabled={busy !== null} onClick={remove} className="rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-[13px] font-semibold transition hover:border-[var(--cardinal)] hover:text-[var(--cardinal)] disabled:opacity-60">
               {busy === "delete" ? "Deleting…" : "Delete"}
             </button>
           </div>
         </div>
       )}
-      {error && <p role="alert" className="mt-2 text-[14px] text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-[14px] text-[var(--danger)]">{error}</p>}
 
-      {skills.length > 0 && (
-        <div className="mt-4 border-t border-[var(--border)] pt-3">
-          <h3 className="text-[15px] font-semibold">Skills from your resume</h3>
-          <ul className="mt-2 flex flex-wrap gap-2">
-            {skills.map((s) => (
-              <li key={s} className="rounded-full bg-[var(--background)] px-3 py-1 text-[13px] font-medium">{s}</li>
-            ))}
-          </ul>
+      {resume && (
+        <div className="min-h-0 md:flex-1 md:overflow-y-auto md:pb-2 md:[mask-image:linear-gradient(to_bottom,black_80%,transparent)]">
+          {skills.length > 0 && (
+            <>
+              <h3 className="text-[14px] font-semibold">Skills from your resume</h3>
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {skills.map((s) => (
+                  <li key={s} className="rounded-full bg-[var(--background)] px-2.5 py-1 text-[12px] font-medium">{s}</li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       )}
+
+      {actions}
     </section>
   );
 }

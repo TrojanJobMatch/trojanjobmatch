@@ -161,7 +161,7 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
         role="log"
         aria-live="polite"
         aria-label="Chat with the JobMatch Agent"
-        className="flex h-[340px] flex-col gap-4 overflow-y-auto overscroll-contain bg-[var(--background)]/40 p-4 sm:h-[400px] sm:p-5"
+        className="flex h-[300px] flex-col gap-4 overflow-y-auto overscroll-contain bg-[var(--background)]/40 p-4 sm:h-[360px] sm:p-5"
       >
         {turns.length === 0 && (
           <p className="m-auto max-w-[560px] text-center text-[15px] text-[var(--muted)]">
@@ -241,9 +241,9 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
 
       <div className="border-t border-[var(--border)] p-3 sm:p-4">
         {turns.length === 0 && (
-          <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1">
+          <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1 [mask-image:linear-gradient(to_right,black_88%,transparent)]">
             {STARTERS.map((s) => (
-              <button key={s} type="button" onClick={() => ask(s)} className="shrink-0 rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13px] font-semibold">
+              <button key={s} type="button" onClick={() => ask(s)} className="shrink-0 rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13px] font-semibold transition hover:border-[var(--cardinal)] hover:text-[var(--cardinal)]">
                 {s}
               </button>
             ))}

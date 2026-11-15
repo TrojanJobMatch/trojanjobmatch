@@ -47,7 +47,7 @@ export function DashboardShell() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-[var(--cardinal-deep)] pb-16 pt-6 text-white sm:pb-20">
+      <header className="bg-[var(--cardinal-deep)] pb-14 pt-5 text-white sm:pb-16">
         <div className="container-tm">
           <div className="flex items-center justify-between gap-4">
             <Wordmark className="text-[20px] sm:text-[24px]" />
@@ -59,23 +59,30 @@ export function DashboardShell() {
               />
             )}
           </div>
-          <h1 className="font-display mt-8 text-[30px] uppercase leading-none sm:text-[44px]">
+          <h1 className="font-display mt-6 text-[30px] uppercase leading-none sm:text-[40px]">
             Fight on{firstName ? <>, <span className="text-[var(--gold)]">{firstName}</span></> : ""}.
           </h1>
-          <p className="mt-2 text-[16px] text-white/85">Every Trojan deserves the right match.</p>
+          <p className="mt-2 text-[15px] text-white/85 sm:text-[16px]">Every Trojan deserves the right match.</p>
         </div>
       </header>
 
       <main className="container-tm -mt-8 flex flex-1 flex-col gap-6 pb-12">
-        <AgentPanel onJobsChanged={() => setRefreshKey((k) => k + 1)} />
-
-        <ResumeCard
-          skills={me?.skills ?? []}
-          onSkillsChange={(skills) => {
-            setMe((current) => (current ? { ...current, skills } : current));
-            setRefreshKey((k) => k + 1);
-          }}
-        />
+        {/* Laptop and up: agent chat and resume side by side, both on the
+            first screen. The resume column takes the chat's height. */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_280px] md:gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <AgentPanel onJobsChanged={() => setRefreshKey((k) => k + 1)} />
+          <div className="relative">
+            <div className="md:absolute md:inset-0">
+              <ResumeCard
+                skills={me?.skills ?? []}
+                onSkillsChange={(skills) => {
+                  setMe((current) => (current ? { ...current, skills } : current));
+                  setRefreshKey((k) => k + 1);
+                }}
+              />
+            </div>
+          </div>
+        </div>
 
         <Filters filters={filters} onChange={setFilters} stats={stats} />
         <JobFeed filters={filters} refreshKey={refreshKey} onDecisionMade={() => setRefreshKey((k) => k + 1)} />
