@@ -20,7 +20,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${archivoBlack.variable} ${archivo.variable} h-full antialiased`}>
+    // suppressHydrationWarning: browser extensions add attributes to <html>
+    // before React loads; this ignores only those, on this one tag.
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${archivoBlack.variable} ${archivo.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

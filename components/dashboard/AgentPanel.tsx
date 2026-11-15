@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { AgentJob } from "@/lib/ai/agentTools";
 
@@ -24,8 +24,9 @@ function Rich({ text }: { text: string }) {
     <div className="flex flex-col gap-1 text-[15px] leading-relaxed">
       {text.split("\n").filter((line) => line.trim()).map((line, i) => {
         const bullet = /^\s*[*-]\s+/.test(line);
+        // **bold** stays bold; single *italic* markers are dropped.
         const parts = line.replace(/^\s*[*-]\s+/, "").split(/\*\*(.+?)\*\*/g);
-        const body = parts.map((part, k) => (k % 2 ? <strong key={k}>{part}</strong> : part));
+        const body = parts.map((part, k) => (k % 2 ? <strong key={k}>{part}</strong> : part.replace(/\*/g, "")));
         return bullet ? (
           <p key={i} className="flex gap-2 pl-1">
             <span aria-hidden className="text-[var(--cardinal)]">•</span>
@@ -45,6 +46,13 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  // The chat lives in a fixed-height box: new messages scroll inside it
+  // and the page below (resume card, jobs) never moves.
+  const chatRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = chatRef.current;
+    if (box) box.scrollTo({ top: box.scrollHeight, behavior: "smooth" });
+  }, [turns, busy]);
 
   async function ask(text: string) {
     const message = text.trim();
@@ -101,9 +109,18 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
         )}
       </div>
 
-      <div className="flex max-h-[520px] flex-col gap-4 overflow-y-auto p-4 sm:p-5">
+      <div
+        ref={chatRef}
+        role="log"
+        aria-live="polite"
+        aria-label="Chat with the JobMatch Agent"
+        className="flex h-[340px] flex-col gap-4 overflow-y-auto overscroll-contain bg-[var(--background)]/40 p-4 sm:h-[400px] sm:p-5"
+      >
         {turns.length === 0 && (
-          <p className="text-[15px] text-[var(--muted)]">
+          <p className="m-auto max-w-[560px] text-center text-[15px] text-[var(--muted)]">
+            <span className="mb-2 block text-[28px]" aria-hidden>
+              💬
+            </span>
             Ask in plain words. The agents search the jobs, read your resume, analyze the best fits and keep your lists. They never apply for you.
             Your chat is private to you and is erased when you type /clear, start a new chat, close the tab or sign out.
           </p>
@@ -129,9 +146,9 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
               )}
               <Rich text={turn.text} />
               {turn.jobs && turn.jobs.length > 0 && (
-                <ul className="grid gap-2 sm:grid-cols-2">
+                <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {turn.jobs.slice(0, 6).map((job) => (
-                    <li key={job.id} className="flex items-start justify-between gap-2 rounded-xl border border-[var(--border)] p-3">
+                    <li key={job.id} className="flex min-w-0 items-start justify-between gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] p-3">
                       <div className="min-w-0">
                         <p className="truncate text-[14px] font-semibold">{job.role}</p>
                         <p className="truncate text-[13px] text-[var(--muted)]">
