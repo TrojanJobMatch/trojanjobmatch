@@ -1,3 +1,5 @@
+import type { Analysis } from "@/lib/ai/analyze";
+
 export type Decision = "saved" | "applied" | "not_interested";
 
 export interface DashboardJob {
@@ -16,6 +18,8 @@ export interface DashboardJob {
   // 0-100: share of the user's skills found in the job's title and
   // description; null when the user hasn't added any skills.
   match: number | null;
+  // This user's cached AI analysis of the job (tm_analyses), if one exists.
+  analysis: Analysis | null;
 }
 
 export interface DashboardStats {

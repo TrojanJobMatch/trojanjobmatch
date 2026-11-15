@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AnalysisPanel } from "@/components/dashboard/AnalysisPanel";
 import type { Analysis } from "@/lib/ai/analyze";
+import { requestAnalysis } from "@/lib/dashboard/analysisQueue";
 import { DOMAIN_LABELS } from "@/lib/dashboard/domains";
 import type { DashboardJob, Decision } from "@/lib/dashboard/types";
 
@@ -13,6 +14,12 @@ const ACTIONS: { value: Decision; label: string }[] = [
   { value: "not_interested", label: "Not interested" },
 ];
 
+type AiState =
+  | { kind: "waiting" } // not on screen yet, or queued
+  | { kind: "ok"; analysis: Analysis }
+  | { kind: "error"; message: string }
+  | { kind: "no_resume"; message: string };
+
 export function JobCard({
   job,
   onDecision,
@@ -21,26 +28,44 @@ export function JobCard({
   onDecision: (jobId: number, decision: Decision | null) => Promise<void>;
 }) {
   const [pending, setPending] = useState(false);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
+  // The feed already carries analyses made earlier; the rest are fetched
+  // automatically when the card scrolls into view.
+  const [ai, setAi] = useState<AiState>(job.analysis ? { kind: "ok", analysis: job.analysis } : { kind: "waiting" });
+  const [attempt, setAttempt] = useState(0);
+  const cardRef = useRef<HTMLElement>(null);
 
-  async function analyze() {
-    if (analysis) return setOpen((o) => !o);
-    setOpen(true);
-    setAnalyzing(true);
-    setAiError(null);
-    try {
-      const res = await fetch(`/api/dashboard/jobs/${job.id}/analyze`, { method: "POST" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) setAiError(data.error ?? "Analysis failed. Try again.");
-      else setAnalysis(data.analysis);
-    } catch {
-      setAiError("Network error, try again.");
-    } finally {
-      setAnalyzing(false);
+  useEffect(() => {
+    if (ai.kind !== "waiting") return;
+    const card = cardRef.current;
+    if (!card) return;
+    const abort = new AbortController();
+    const start = () =>
+      requestAnalysis(job.id, abort.signal).then((outcome) => {
+        if (outcome.kind !== "cancelled") setAi(outcome);
+      });
+    if (typeof IntersectionObserver === "undefined") {
+      start();
+      return () => abort.abort();
     }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        observer.disconnect();
+        start();
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(card);
+    return () => {
+      observer.disconnect();
+      abort.abort();
+    };
+    // `attempt` restarts this after "Try again".
+  }, [ai.kind, job.id, attempt]);
+
+  function retry() {
+    setAi({ kind: "waiting" });
+    setAttempt((n) => n + 1);
   }
 
   async function choose(value: Decision) {
@@ -54,7 +79,7 @@ export function JobCard({
   }
 
   return (
-    <article className="card flex flex-col gap-3 p-4 sm:p-5">
+    <article ref={cardRef} className="card flex flex-col gap-3 p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-[17px] font-semibold leading-snug">{job.role}</h3>
@@ -68,12 +93,24 @@ export function JobCard({
             </span>
           )}
         </div>
-        {job.match !== null && (
-          <span className="pill-gold shrink-0 text-[14px]" title="How many of your skills this job mentions">
-            {job.match}
-          </span>
-        )}
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          {ai.kind === "ok" ? (
+            <span className="pill-gold text-[14px]" title="AI fit: how well your resume matches this job (0-100)">
+              AI fit {ai.analysis.fit}
+            </span>
+          ) : ai.kind === "waiting" ? (
+            <span className="animate-pulse rounded-full bg-[var(--background)] px-2.5 py-0.5 text-[13px] font-semibold text-[var(--muted)]" aria-live="polite">
+              Scoring…
+            </span>
+          ) : null}
+          {job.match !== null && (
+            <span className="text-[12px] text-[var(--muted)]" title="How many of your skills this job mentions">
+              Skills match {job.match}%
+            </span>
+          )}
+        </div>
       </div>
+
       <div className="flex flex-wrap items-center gap-2">
         {ACTIONS.map(({ value, label }) => {
           const active = job.decision === value;
@@ -93,14 +130,6 @@ export function JobCard({
             </button>
           );
         })}
-        <button
-          type="button"
-          onClick={analyze}
-          disabled={analyzing}
-          className="btn min-h-[40px] bg-[var(--gold)] px-4 text-[14px] font-semibold text-black"
-        >
-          {analyzing ? "Analyzing…" : analysis ? (open ? "Hide AI analysis" : "Show AI analysis") : "✨ Analyze with AI"}
-        </button>
         {job.apply_url && (
           <a
             href={job.apply_url}
@@ -112,9 +141,28 @@ export function JobCard({
           </a>
         )}
       </div>
-      {open && analyzing && <p className="text-[14px] text-[var(--muted)]">Analyst agent is comparing this job with your resume…</p>}
-      {open && aiError && <p className="text-[14px] text-[var(--danger)]">{aiError}</p>}
-      {open && analysis && <AnalysisPanel analysis={analysis} />}
+
+      {ai.kind === "ok" && (
+        <details className="group rounded-xl border border-[var(--border)]">
+          <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 px-3 text-[14px] [&::-webkit-details-marker]:hidden">
+            <span className="shrink-0 font-semibold">AI analysis</span>
+            <span className="min-w-0 flex-1 truncate text-[var(--muted)]">{ai.analysis.verdict}</span>
+            <span aria-hidden className="shrink-0 text-[var(--muted)] transition-transform group-open:rotate-180">▾</span>
+          </summary>
+          <div className="p-2 pt-0">
+            <AnalysisPanel analysis={ai.analysis} />
+          </div>
+        </details>
+      )}
+      {ai.kind === "no_resume" && <p className="text-[13px] text-[var(--muted)]">{ai.message}</p>}
+      {ai.kind === "error" && (
+        <p className="text-[13px] text-[var(--muted)]">
+          {ai.message}{" "}
+          <button type="button" onClick={retry} className="font-semibold text-[var(--cardinal)] underline underline-offset-2">
+            Try again
+          </button>
+        </p>
+      )}
     </article>
   );
 }

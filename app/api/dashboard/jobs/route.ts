@@ -38,12 +38,14 @@ export async function GET(request: NextRequest) {
       select
         j.id, j.company, j.role, j.location, j.apply_url, j.posted_date, j.created_at, j.source, j.tm_domain as domain, j.tm_level as level, j.tm_type as role_type,
         d.decision,
+        a.result as analysis,
         case when cardinality(${skills}::text[]) = 0 then null else round(100.0 * (
           select count(*) from unnest(${skills}::text[]) s
           where position(s in lower(j.role || ' ' || coalesce(j.jd_text, ''))) > 0
         ) / cardinality(${skills}::text[]))::int end as match
       from jobs j
       left join tm_decisions d on d.job_id = j.id and d.user_id = ${userId}
+      left join tm_analyses a on a.job_id = j.id and a.user_id = ${userId}
       where
         (${decision}::text is null and d.decision is distinct from 'not_interested' or d.decision = ${decision})
         and (${domain}::text is null or j.tm_domain = ${domain})

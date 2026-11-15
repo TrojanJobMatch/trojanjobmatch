@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { JobCard } from "@/components/dashboard/JobCard";
+import { resetAnalysisQueue } from "@/lib/dashboard/analysisQueue";
 import type { DashboardJob, Decision, JobFilters } from "@/lib/dashboard/types";
 
 function buildQuery(filters: JobFilters): string {
@@ -37,6 +38,7 @@ export function JobFeed({
 
   useEffect(() => {
     let cancelled = false;
+    resetAnalysisQueue();
     fetch(`/api/dashboard/jobs?${buildQuery(filters)}`)
       .then((res) => res.json())
       .then((data) => {
