@@ -73,14 +73,15 @@ export function Filters({
           );
         })}
       </div>
-      <input
-        type="search"
-        placeholder="Search company or role"
-        value={filters.search}
-        onChange={(event) => onChange({ ...filters, search: event.target.value })}
-        className="input"
-      />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
+        <input
+          type="search"
+          aria-label="Search company or role"
+          placeholder="Search company or role"
+          value={filters.search}
+          onChange={(event) => onChange({ ...filters, search: event.target.value })}
+          className="input sm:col-span-3 lg:col-span-1"
+        />
         <select
           aria-label="Domain"
           value={filters.domain ?? ""}

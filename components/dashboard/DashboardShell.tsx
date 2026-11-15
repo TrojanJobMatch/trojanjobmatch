@@ -84,8 +84,10 @@ export function DashboardShell() {
           </div>
         </div>
 
-        <Filters filters={filters} onChange={setFilters} stats={stats} />
-        <JobFeed filters={filters} refreshKey={refreshKey} onDecisionMade={() => setRefreshKey((k) => k + 1)} />
+        <section id="jobs" aria-label="Jobs" className="flex scroll-mt-4 flex-col gap-3 pt-2">
+          <Filters filters={filters} onChange={setFilters} stats={stats} />
+          <JobFeed filters={filters} refreshKey={refreshKey} onDecisionMade={() => setRefreshKey((k) => k + 1)} />
+        </section>
 
         <p className="text-center text-[13px] text-[var(--muted)]">
           A student project built at the AI@USC Hackathon. Not an official USC website.
