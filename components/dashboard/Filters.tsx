@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { DOMAINS, ROLE_TYPES } from "@/lib/dashboard/domains";
-import type { JobFilters } from "@/lib/dashboard/types";
+import type { DashboardStats, JobFilters } from "@/lib/dashboard/types";
 
 const TABS: { value: JobFilters["decision"]; label: string }[] = [
   { value: "all", label: "All jobs" },
@@ -11,7 +11,20 @@ const TABS: { value: JobFilters["decision"]; label: string }[] = [
   { value: "not_interested", label: "Not interested" },
 ];
 
-export function Filters({ filters, onChange }: { filters: JobFilters; onChange: (next: JobFilters) => void }) {
+export function Filters({
+  filters,
+  onChange,
+  stats,
+}: {
+  filters: JobFilters;
+  onChange: (next: JobFilters) => void;
+  stats: DashboardStats | null;
+}) {
+  // The count of the user's own saved / not-interested jobs, shown beside the tab.
+  const counts: Partial<Record<JobFilters["decision"], number>> = {
+    saved: stats?.saved,
+    not_interested: stats?.notInterested,
+  };
   const [companies, setCompanies] = useState<{ company: string; n: number }[]>([]);
   useEffect(() => {
     let cancelled = false;
@@ -41,11 +54,21 @@ export function Filters({ filters, onChange }: { filters: JobFilters; onChange: 
               role="tab"
               aria-selected={active}
               onClick={() => onChange({ ...filters, decision: tab.value })}
-              className={`min-h-[40px] shrink-0 rounded-full px-4 text-[14px] font-semibold ${
+              className={`inline-flex min-h-[40px] shrink-0 items-center gap-2 rounded-full px-4 text-[14px] font-semibold ${
                 active ? "bg-[var(--cardinal-deep)] text-white" : "border border-[var(--border)] bg-white"
               }`}
             >
               {tab.label}
+              {(counts[tab.value] ?? 0) > 0 && (
+                <span
+                  aria-label={`${counts[tab.value]} jobs`}
+                  className={`min-w-[22px] rounded-full px-1.5 text-center text-[12px] font-bold leading-[22px] ${
+                    active ? "bg-white text-[var(--cardinal-deep)]" : "bg-[var(--cardinal-deep)] text-white"
+                  }`}
+                >
+                  {counts[tab.value]}
+                </span>
+              )}
             </button>
           );
         })}

@@ -9,15 +9,14 @@ import { Filters } from "@/components/dashboard/Filters";
 import { JobFeed } from "@/components/dashboard/JobFeed";
 import { ProfileMenu, type Profile } from "@/components/dashboard/ProfileMenu";
 import { ResumeCard } from "@/components/dashboard/ResumeCard";
-import { StatsBar } from "@/components/dashboard/StatsBar";
 import { DEFAULT_FILTERS, type DashboardStats, type JobFilters } from "@/lib/dashboard/types";
 
 interface Me extends Profile {
   skills: string[];
 }
 
-// Always-visible dashboard: cardinal band with the user's greeting, stat
-// tiles overlapping the band, skills editor, filters and the job feed.
+// Always-visible dashboard: cardinal band with the user's greeting, the
+// agent panel overlapping the band, resume card, filters and the job feed.
 export function DashboardShell() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
@@ -48,7 +47,7 @@ export function DashboardShell() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-[var(--cardinal-deep)] pb-20 pt-6 text-white sm:pb-24">
+      <header className="bg-[var(--cardinal-deep)] pb-16 pt-6 text-white sm:pb-20">
         <div className="container-tm">
           <div className="flex items-center justify-between gap-4">
             <Wordmark className="text-[20px] sm:text-[24px]" />
@@ -67,9 +66,7 @@ export function DashboardShell() {
         </div>
       </header>
 
-      <main className="container-tm -mt-12 flex flex-1 flex-col gap-6 pb-12">
-        {stats && <StatsBar stats={stats} />}
-
+      <main className="container-tm -mt-8 flex flex-1 flex-col gap-6 pb-12">
         <AgentPanel onJobsChanged={() => setRefreshKey((k) => k + 1)} />
 
         <ResumeCard
@@ -80,7 +77,7 @@ export function DashboardShell() {
           }}
         />
 
-        <Filters filters={filters} onChange={setFilters} />
+        <Filters filters={filters} onChange={setFilters} stats={stats} />
         <JobFeed filters={filters} refreshKey={refreshKey} onDecisionMade={() => setRefreshKey((k) => k + 1)} />
 
         <p className="text-center text-[13px] text-[var(--muted)]">
