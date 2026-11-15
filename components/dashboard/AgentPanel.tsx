@@ -142,8 +142,8 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
   }
 
   return (
-    <section className="card overflow-hidden">
-      <div className="flex items-center gap-3 bg-[#1d1d1f] px-4 py-3 text-white sm:px-5">
+    <section className="card flex flex-col overflow-hidden md:h-full">
+      <div className="flex shrink-0 items-center gap-3 bg-[#1d1d1f] px-4 py-3 text-white sm:px-5">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--gold)] text-[18px]">🤖</span>
         <div>
           <h2 className="font-heading text-[17px] leading-tight">JobMatch Agent</h2>
@@ -161,7 +161,7 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
         role="log"
         aria-live="polite"
         aria-label="Chat with the JobMatch Agent"
-        className="flex h-[300px] flex-col gap-4 overflow-y-auto overscroll-contain bg-[var(--background)]/40 p-4 sm:h-[360px] sm:p-5"
+        className="flex h-[300px] flex-col gap-4 overflow-y-auto overscroll-contain bg-[var(--background)]/40 p-4 sm:h-[360px] sm:p-5 md:h-auto md:min-h-0 md:flex-1"
       >
         {turns.length === 0 && (
           <p className="m-auto max-w-[560px] text-center text-[15px] text-[var(--muted)]">
@@ -239,7 +239,7 @@ export function AgentPanel({ onJobsChanged }: { onJobsChanged: () => void }) {
         {busy && <p className="text-[14px] text-[var(--muted)]">🤖 Agents are working: planning, searching and analyzing…</p>}
       </div>
 
-      <div className="border-t border-[var(--border)] p-3 sm:p-4">
+      <div className="shrink-0 border-t border-[var(--border)] p-3 sm:p-4">
         {turns.length === 0 && (
           <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1 [mask-image:linear-gradient(to_right,black_88%,transparent)]">
             {STARTERS.map((s) => (

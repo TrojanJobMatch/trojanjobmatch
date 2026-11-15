@@ -47,7 +47,10 @@ export function DashboardShell() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-[var(--cardinal-deep)] pb-14 pt-5 text-white sm:pb-16">
+      {/* First screen ("front page"): greeting, agent chat and resume fill
+          exactly one screen on tablet and up; the jobs start below it. */}
+      <div className="md:flex md:h-svh md:min-h-[620px] md:flex-col">
+      <header className="shrink-0 bg-[var(--cardinal-deep)] pb-14 pt-5 text-white sm:pb-16">
         <div className="container-tm">
           <div className="flex items-center justify-between gap-4">
             <Wordmark className="text-[20px] sm:text-[24px]" />
@@ -66,10 +69,9 @@ export function DashboardShell() {
         </div>
       </header>
 
-      <main className="container-tm -mt-8 flex flex-1 flex-col gap-6 pb-12">
-        {/* Laptop and up: agent chat and resume side by side, both on the
-            first screen. The resume column takes the chat's height. */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_280px] md:gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="container-tm -mt-8 md:flex md:min-h-0 md:flex-1 md:flex-col">
+        {/* Tablet and up: agent chat and resume side by side, same height. */}
+        <div className="grid grid-cols-1 gap-6 md:mb-6 md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,1fr)_280px] md:grid-rows-[minmax(0,1fr)] md:gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <AgentPanel onJobsChanged={() => setRefreshKey((k) => k + 1)} />
           <div className="relative">
             <div className="md:absolute md:inset-0">
@@ -83,7 +85,10 @@ export function DashboardShell() {
             </div>
           </div>
         </div>
+      </div>
+      </div>
 
+      <main className="container-tm flex flex-1 flex-col gap-6 pb-12 pt-6 md:pt-8">
         <section id="jobs" aria-label="Jobs" className="flex scroll-mt-4 flex-col gap-3 pt-2">
           <Filters filters={filters} onChange={setFilters} stats={stats} />
           <JobFeed filters={filters} refreshKey={refreshKey} onDecisionMade={() => setRefreshKey((k) => k + 1)} />
