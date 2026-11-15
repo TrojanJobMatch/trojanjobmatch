@@ -9,7 +9,8 @@ import { isDomainKey, isRoleType } from "@/lib/dashboard/domains";
 // (tm_decisions) and a match score from their own skills. Query params:
 // decision (all | saved | applied | not_interested), minMatch, search,
 // sort (match | newest), domain (see lib/dashboard/domains.ts),
-// level (student, the default, hides senior titles | all), limit (default 50, max 200).
+// level (student, the default, hides senior titles | all), limit (default 50, max 200),
+// offset (for paging). The response carries `total`, the count across all pages.
 export async function GET(request: NextRequest) {
   const userId = await requireSession(request);
   if (!userId) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
   const searchPattern = searchParam ? `%${searchParam}%` : null;
   const byMatch = params.get("sort") !== "newest";
   const limit = Math.min(Number(params.get("limit")) || 50, 200);
+  const offset = Math.max(0, Math.min(Math.floor(Number(params.get("offset")) || 0), 100000));
   const skills = user.skills ?? [];
   const domainParam = params.get("domain");
   const domain = isDomainKey(domainParam) ? domainParam : null;
@@ -33,8 +35,8 @@ export async function GET(request: NextRequest) {
   const roleType = isRoleType(roleTypeParam) ? roleTypeParam : null;
   const company = params.get("company")?.trim().slice(0, 200) || null;
 
-  const rows = await getSql()`
-    select * from (
+  const rows = (await getSql()`
+    select *, count(*) over()::int as total from (
       select
         j.id, j.company, j.role, j.location, j.apply_url, j.posted_date, j.created_at, j.source, j.tm_domain as domain, j.tm_level as level, j.tm_type as role_type,
         d.decision,
@@ -58,8 +60,10 @@ export async function GET(request: NextRequest) {
     order by
       case when ${byMatch}::boolean then feed.match end desc nulls last,
       feed.created_at desc
-    limit ${limit}
-  `;
+    limit ${limit} offset ${offset}
+  `) as Record<string, unknown>[];
 
-  return NextResponse.json({ jobs: rows });
+  const total = rows.length > 0 ? Number(rows[0].total) : 0;
+  for (const row of rows) delete row.total;
+  return NextResponse.json({ jobs: rows, total });
 }

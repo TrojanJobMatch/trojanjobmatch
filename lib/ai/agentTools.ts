@@ -22,7 +22,17 @@ export const TOOL_AGENT: Record<string, string> = {
   list_my_jobs: "Tracker",
   save_job: "Tracker",
   hide_job: "Tracker",
+  ask_job_preferences: "JobMatch Agent",
 };
+
+// Asked before the first job search when the student hasn't said what kind
+// of job or which season they want. "All of the above" means no filter.
+export const PREFERENCE_QUESTIONS = [
+  { id: "type", question: "What type of job are you looking for?", options: ["Internship", "Full-time", "All of the above"] },
+  { id: "season", question: "Which timeline?", options: ["Spring", "Summer", "Fall", "Winter", "All of the above"] },
+];
+
+const SEASON_WORDS: Record<string, string> = { spring: "spring", summer: "summer", fall: "fall|autumn", winter: "winter" };
 
 export const FUNCTION_DECLARATIONS = [
   {
@@ -32,13 +42,19 @@ export const FUNCTION_DECLARATIONS = [
       type: "OBJECT",
       properties: {
         domain: { type: "STRING", description: `One of: ${DOMAINS.map((d) => d.key).join(", ")}, other` },
-        role_type: { type: "STRING", description: "internship, new_grad, full_time, contract or part_time" },
+        role_type: { type: "STRING", description: "internship, full_time (includes new grad roles), new_grad, contract or part_time. Omit for all types." },
+        season: { type: "STRING", description: "spring, summer, fall or winter (the term the job starts). Omit for any season." },
         query: { type: "STRING", description: "Words to find in the title or company, e.g. 'machine learning' or 'Stripe'" },
         location: { type: "STRING", description: "Words to find in the location, e.g. 'CA', 'Los Angeles', 'Remote'" },
         include_senior: { type: "BOOLEAN" },
         limit: { type: "INTEGER" },
       },
     },
+  },
+  {
+    name: "ask_job_preferences",
+    description: "Ask the student two quick multiple-choice questions (job type: internship / full-time / all; timeline: spring / summer / fall / winter / all) before searching. The student answers with buttons in the next message.",
+    parameters: { type: "OBJECT", properties: {} },
   },
   { name: "get_my_profile", description: "Resume Reader: the student's own resume profile (skills, degree, school, grad date, projects).", parameters: { type: "OBJECT", properties: {} } },
   {
@@ -48,8 +64,8 @@ export const FUNCTION_DECLARATIONS = [
   },
   {
     name: "list_my_jobs",
-    description: "Tracker: the student's saved / applied / not_interested jobs.",
-    parameters: { type: "OBJECT", properties: { decision: { type: "STRING", description: "saved, applied or not_interested" } }, required: ["decision"] },
+    description: "Tracker: the student's saved or not_interested jobs.",
+    parameters: { type: "OBJECT", properties: { decision: { type: "STRING", description: "saved or not_interested" } }, required: ["decision"] },
   },
   { name: "save_job", description: "Tracker: add a job to the student's Saved list. Only when the student asks to save.", parameters: { type: "OBJECT", properties: { job_id: { type: "INTEGER" } }, required: ["job_id"] } },
   { name: "hide_job", description: "Tracker: mark a job not interested. Only when the student asks.", parameters: { type: "OBJECT", properties: { job_id: { type: "INTEGER" } }, required: ["job_id"] } },
@@ -76,6 +92,14 @@ export async function runTool(userId: number, name: string, args: Record<string,
     case "search_jobs": {
       const domain = isDomainKey(String(args.domain ?? "")) ? String(args.domain) : null;
       const roleType = isRoleType(String(args.role_type ?? "")) ? String(args.role_type) : null;
+      // "Full-time" covers new grad roles too: both are full-time jobs.
+      const roleTypes = roleType === "full_time" ? ["full_time", "new_grad"] : roleType ? [roleType] : null;
+      const seasonKey = String(args.season ?? "").toLowerCase();
+      const seasonWords = SEASON_WORDS[seasonKey] ?? null;
+      const seasonTitle = seasonWords ? `\\y(${seasonWords})\\y` : null;
+      const seasonJd = seasonWords
+        ? `\\y(${seasonWords})\\y\\s*(20\\d\\d|intern|internship|term|co-?op|program|session|semester|quarter|start)`
+        : null;
       const query = typeof args.query === "string" && args.query.trim() ? `%${args.query.trim().slice(0, 80)}%` : null;
       const location = typeof args.location === "string" && args.location.trim() ? `%${args.location.trim().slice(0, 60)}%` : null;
       const studentOnly = args.include_senior !== true;
@@ -89,14 +113,15 @@ export async function runTool(userId: number, name: string, args: Record<string,
         from jobs j left join tm_decisions d on d.job_id = j.id and d.user_id = ${userId}
         where d.decision is distinct from 'not_interested'
           and (${domain}::text is null or j.tm_domain = ${domain})
-          and (${roleType}::text is null or j.tm_type = ${roleType})
+          and (${roleTypes}::text[] is null or j.tm_type = any(${roleTypes}::text[]))
+          and (${seasonTitle}::text is null or j.role ~* ${seasonTitle} or coalesce(j.jd_text, '') ~* ${seasonJd})
           and (${query}::text is null or j.role ilike ${query} or j.company ilike ${query})
           and (${location}::text is null or j.location ilike ${location})
           and (not ${studentOnly}::boolean or j.tm_level is distinct from 'experienced')
         order by match desc nulls last, j.created_at desc
         limit ${limit}
       `) as (AgentJob & { match: number | null })[];
-      const filters = [domain, roleType, args.query, args.location].filter(Boolean).join(", ") || "all jobs";
+      const filters = [domain, roleType, seasonWords ? seasonKey : null, args.query, args.location].filter(Boolean).join(", ") || "all jobs";
       return {
         summary: `Searched ${filters}: ${rows.length} found`,
         data: { jobs: rows.map((r) => ({ id: r.id, company: r.company, role: r.role, location: r.location, keyword_match: r.match })) },

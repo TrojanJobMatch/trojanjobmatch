@@ -10,7 +10,6 @@ import type { DashboardJob, Decision } from "@/lib/dashboard/types";
 
 const ACTIONS: { value: Decision; label: string }[] = [
   { value: "saved", label: "Save" },
-  { value: "applied", label: "Applied" },
   { value: "not_interested", label: "Not interested" },
 ];
 
@@ -78,73 +77,79 @@ export function JobCard({
     }
   }
 
+  const small = "min-h-[36px] rounded-full px-3.5 text-[13px] font-semibold transition disabled:opacity-60";
   return (
-    <article ref={cardRef} className="card flex flex-col gap-3 p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-[17px] font-semibold leading-snug">{job.role}</h3>
-          <p className="mt-0.5 text-[15px] text-[var(--muted)]">
-            {job.company}
-            {job.location ? ` · ${job.location}` : ""}
+    <article ref={cardRef} className="card flex flex-col gap-2 px-4 py-3.5 sm:px-5 md:py-4">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="truncate text-[16px] font-semibold leading-snug md:text-[17px]" title={job.role}>
+              {job.role}
+            </h3>
+            {ai.kind === "ok" ? (
+              <span className="pill-gold shrink-0 text-[12px]" title="AI fit: how well your resume matches this job (0-100)">
+                AI fit {ai.analysis.fit}
+              </span>
+            ) : ai.kind === "waiting" ? (
+              <span className="shrink-0 animate-pulse rounded-full bg-[var(--background)] px-2 py-0.5 text-[12px] font-semibold text-[var(--muted)]" aria-live="polite">
+                Scoring…
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-0.5 flex min-w-0 items-center gap-2 text-[14px] text-[var(--muted)]">
+            <span className="truncate">
+              <span className="font-medium text-[var(--foreground)]">{job.company}</span>
+              {job.location ? ` · ${job.location}` : ""}
+            </span>
+            {job.domain && (
+              <span className="shrink-0 rounded-full bg-[var(--background)] px-2 py-0.5 text-[11px] font-semibold text-[var(--cardinal)]">
+                {DOMAIN_LABELS[job.domain] ?? "Other"}
+              </span>
+            )}
+            {job.match !== null && (
+              <span className="shrink-0 text-[12px]" title="How many of your skills this job mentions">
+                Skills {job.match}%
+              </span>
+            )}
           </p>
-          {job.domain && (
-            <span className="mt-2 inline-block rounded-full bg-[var(--background)] px-2.5 py-1 text-[12px] font-semibold text-[var(--cardinal)]">
-              {DOMAIN_LABELS[job.domain] ?? "Other"}
-            </span>
-          )}
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          {ai.kind === "ok" ? (
-            <span className="pill-gold text-[14px]" title="AI fit: how well your resume matches this job (0-100)">
-              AI fit {ai.analysis.fit}
-            </span>
-          ) : ai.kind === "waiting" ? (
-            <span className="animate-pulse rounded-full bg-[var(--background)] px-2.5 py-0.5 text-[13px] font-semibold text-[var(--muted)]" aria-live="polite">
-              Scoring…
-            </span>
-          ) : null}
-          {job.match !== null && (
-            <span className="text-[12px] text-[var(--muted)]" title="How many of your skills this job mentions">
-              Skills match {job.match}%
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        {ACTIONS.map(({ value, label }) => {
-          const active = job.decision === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              disabled={pending}
-              aria-pressed={active}
-              onClick={() => choose(value)}
-              className={`btn min-h-[40px] px-4 text-[14px] ${
-                active ? "bg-[var(--cardinal-deep)] text-white" : "btn-secondary"
-              }`}
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {ACTIONS.map(({ value, label }) => {
+            const active = job.decision === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                disabled={pending}
+                aria-pressed={active}
+                onClick={() => choose(value)}
+                className={`${small} ${
+                  active
+                    ? "bg-[var(--cardinal-deep)] text-white"
+                    : "border border-[var(--border)] bg-[var(--card)] hover:border-[var(--cardinal)] hover:text-[var(--cardinal)]"
+                }`}
+              >
+                {active && value !== "not_interested" ? "✓ " : ""}
+                {active && value === "saved" ? "Saved" : label}
+              </button>
+            );
+          })}
+          {job.apply_url && (
+            <a
+              href={job.apply_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-1 text-[13px] font-semibold text-[var(--cardinal)] underline underline-offset-2"
             >
-              {active && value !== "not_interested" ? "✓ " : ""}
-              {label}
-            </button>
-          );
-        })}
-        {job.apply_url && (
-          <a
-            href={job.apply_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto text-[14px] font-semibold text-[var(--cardinal)] underline underline-offset-2"
-          >
-            View posting ↗
-          </a>
-        )}
+              View ↗
+            </a>
+          )}
+        </div>
       </div>
 
       {ai.kind === "ok" && (
         <details className="group rounded-xl border border-[var(--border)]">
-          <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 px-3 text-[14px] [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-[40px] cursor-pointer list-none items-center gap-2 px-3 text-[13px] [&::-webkit-details-marker]:hidden">
             <span className="shrink-0 font-semibold">AI analysis</span>
             <span className="min-w-0 flex-1 truncate text-[var(--muted)]">{ai.analysis.verdict}</span>
             <span aria-hidden className="shrink-0 text-[var(--muted)] transition-transform group-open:rotate-180">▾</span>

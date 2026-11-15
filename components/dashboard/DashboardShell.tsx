@@ -9,21 +9,21 @@ import { Filters } from "@/components/dashboard/Filters";
 import { JobFeed } from "@/components/dashboard/JobFeed";
 import { ProfileMenu, type Profile } from "@/components/dashboard/ProfileMenu";
 import { ResumeCard } from "@/components/dashboard/ResumeCard";
-import { StatsBar } from "@/components/dashboard/StatsBar";
 import { DEFAULT_FILTERS, type DashboardStats, type JobFilters } from "@/lib/dashboard/types";
 
 interface Me extends Profile {
   skills: string[];
 }
 
-// Always-visible dashboard: cardinal band with the user's greeting, stat
-// tiles overlapping the band, skills editor, filters and the job feed.
+// Always-visible dashboard: cardinal band with the user's greeting, the
+// agent panel overlapping the band, resume card, filters and the job feed.
 export function DashboardShell() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
   const [filters, setFilters] = useState<JobFilters>(DEFAULT_FILTERS);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [resumeKey, setResumeKey] = useState(0);
 
   useEffect(() => {
     fetch("/api/me")
@@ -48,7 +48,10 @@ export function DashboardShell() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-[var(--cardinal-deep)] pb-20 pt-6 text-white sm:pb-24">
+      {/* First screen ("front page"): greeting, agent chat and resume fill
+          exactly one screen on tablet and up; the jobs start below it. */}
+      <div className="md:flex md:h-svh md:min-h-[620px] md:flex-col">
+      <header className="shrink-0 bg-[var(--cardinal-deep)] pb-14 pt-5 text-white sm:pb-16">
         <div className="container-tm">
           <div className="flex items-center justify-between gap-4">
             <Wordmark className="text-[20px] sm:text-[24px]" />
@@ -60,28 +63,37 @@ export function DashboardShell() {
               />
             )}
           </div>
-          <h1 className="font-display mt-8 text-[30px] uppercase leading-none sm:text-[44px]">
+          <h1 className="font-display mt-6 text-[30px] uppercase leading-none sm:text-[40px]">
             Fight on{firstName ? <>, <span className="text-[var(--gold)]">{firstName}</span></> : ""}.
           </h1>
-          <p className="mt-2 text-[16px] text-white/85">Every Trojan deserves the right match.</p>
+          <p className="mt-2 text-[15px] text-white/85 sm:text-[16px]">Every Trojan deserves the right match.</p>
         </div>
       </header>
 
-      <main className="container-tm -mt-12 flex flex-1 flex-col gap-6 pb-12">
-        {stats && <StatsBar stats={stats} />}
+      <div className="container-tm -mt-8 md:flex md:min-h-0 md:flex-1 md:flex-col">
+        {/* Tablet and up: agent chat fills the screen, resume sits in one
+            horizontal row under it. */}
+        <div className="flex flex-col gap-6 md:mb-6 md:min-h-0 md:flex-1 md:gap-4">
+          <div className="md:flex md:min-h-0 md:flex-1 md:flex-col">
+            <AgentPanel onJobsChanged={() => setRefreshKey((k) => k + 1)} />
+          </div>
+          <ResumeCard
+            skills={me?.skills ?? []}
+            onSkillsChange={(skills) => {
+              setMe((current) => (current ? { ...current, skills } : current));
+              setRefreshKey((k) => k + 1);
+              setResumeKey((k) => k + 1);
+            }}
+          />
+        </div>
+      </div>
+      </div>
 
-        <AgentPanel onJobsChanged={() => setRefreshKey((k) => k + 1)} />
-
-        <ResumeCard
-          skills={me?.skills ?? []}
-          onSkillsChange={(skills) => {
-            setMe((current) => (current ? { ...current, skills } : current));
-            setRefreshKey((k) => k + 1);
-          }}
-        />
-
-        <Filters filters={filters} onChange={setFilters} />
-        <JobFeed filters={filters} refreshKey={refreshKey} onDecisionMade={() => setRefreshKey((k) => k + 1)} />
+      <main className="container-tm flex flex-1 flex-col gap-6 pb-12 pt-6 md:pt-8">
+        <section id="jobs" aria-label="Jobs" className="flex scroll-mt-4 flex-col gap-3 pt-2">
+          <Filters filters={filters} onChange={setFilters} stats={stats} />
+          <JobFeed filters={filters} refreshKey={refreshKey} resumeKey={resumeKey} onDecisionMade={() => setRefreshKey((k) => k + 1)} />
+        </section>
 
         <p className="text-center text-[13px] text-[var(--muted)]">
           A student project built at the AI@USC Hackathon. Not an official USC website.
