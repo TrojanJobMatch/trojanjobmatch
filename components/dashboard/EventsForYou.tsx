@@ -58,7 +58,7 @@ export function EventsForYou({ refreshKey }: { refreshKey: number }) {
   const visible = showAll ? pool : pool.slice(0, FIRST_PAGE);
 
   return (
-    <section className="card p-4 sm:p-5">
+    <section id="events" aria-label="Events for you" className="card scroll-mt-4 p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-heading text-[18px]">Events for you</h2>
         <span className="text-[13px] text-[var(--muted)]">Sample events modeled on calendar.usc.edu</span>

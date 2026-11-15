@@ -64,10 +64,20 @@ export function DashboardShell() {
               />
             )}
           </div>
-          <h1 className="font-display mt-6 text-[30px] uppercase leading-none sm:text-[40px]">
-            Fight on{firstName ? <>, <span className="text-[var(--gold)]">{firstName}</span></> : ""}.
-          </h1>
-          <p className="mt-2 text-[15px] text-white/85 sm:text-[16px]">For Trojans, by Trojans.</p>
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="font-display text-[30px] uppercase leading-none sm:text-[40px]">
+                Fight on{firstName ? <>, <span className="text-[var(--gold)]">{firstName}</span></> : ""}.
+              </h1>
+              <p className="mt-2 text-[15px] text-white/85 sm:text-[16px]">For Trojans, by Trojans.</p>
+            </div>
+            <a
+              href="#events"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-full border-2 border-[var(--gold)] px-5 text-[15px] font-bold text-[var(--gold)] hover:bg-white/10"
+            >
+              <span aria-hidden>📅</span> Events for you
+            </a>
+          </div>
         </div>
       </header>
 
