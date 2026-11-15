@@ -19,6 +19,25 @@ type AiState =
   | { kind: "error"; message: string }
   | { kind: "no_resume"; message: string };
 
+// Fit score as a small ring: the arc fills to the score and its colour shows
+// the tier (green strong, gold fair, grey low), so a column of cards can be
+// scanned at a glance. Pulses while the score is being worked out.
+function FitScore({ score, scoring }: { score: number | null; scoring: boolean }) {
+  const color = score === null ? "var(--border)" : score >= 75 ? "#1a7f37" : score >= 50 ? "#e0a800" : "#8e8e93";
+  const ring = score === null ? "var(--border)" : `conic-gradient(${color} ${score * 3.6}deg, #ececec 0deg)`;
+  const label = score !== null ? `Fit score ${score} out of 100` : scoring ? "Working out your fit score" : "No fit score yet";
+  return (
+    <div className="flex w-[54px] shrink-0 flex-col items-center gap-0.5" role="img" aria-label={label} title={label}>
+      <div className={`flex h-[44px] w-[44px] items-center justify-center rounded-full ${scoring ? "animate-pulse" : ""}`} style={{ background: ring }}>
+        <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[var(--card)] text-[14px] font-bold leading-none" style={{ color: score === null ? "var(--muted)" : "var(--foreground)" }}>
+          {score ?? (scoring ? "…" : "–")}
+        </span>
+      </div>
+      <span className="whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.06em] text-[var(--muted)]">Fit score</span>
+    </div>
+  );
+}
+
 export function JobCard({
   job,
   onDecision,
@@ -81,20 +100,13 @@ export function JobCard({
   return (
     <article ref={cardRef} className="card flex flex-col gap-2 px-4 py-3.5 sm:px-5 md:py-4">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+        <FitScore score={ai.kind === "ok" ? ai.analysis.fit : null} scoring={ai.kind === "waiting"} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="truncate text-[16px] font-semibold leading-snug md:text-[17px]" title={job.role}>
               {job.role}
             </h3>
-            {ai.kind === "ok" ? (
-              <span className="pill-gold shrink-0 text-[12px]" title="AI fit: how well your resume matches this job (0-100)">
-                AI fit {ai.analysis.fit}
-              </span>
-            ) : ai.kind === "waiting" ? (
-              <span className="shrink-0 animate-pulse rounded-full bg-[var(--background)] px-2 py-0.5 text-[12px] font-semibold text-[var(--muted)]" aria-live="polite">
-                Scoring…
-              </span>
-            ) : null}
           </div>
           <p className="mt-0.5 flex min-w-0 items-center gap-2 text-[14px] text-[var(--muted)]">
             <span className="truncate">
@@ -112,6 +124,7 @@ export function JobCard({
               </span>
             )}
           </p>
+        </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {ACTIONS.map(({ value, label }) => {
