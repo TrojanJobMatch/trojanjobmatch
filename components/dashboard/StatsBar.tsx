@@ -3,13 +3,12 @@ import type { DashboardStats } from "@/lib/dashboard/types";
 const TILES: { key: keyof DashboardStats; label: string }[] = [
   { key: "strongMatches", label: "Strong matches" },
   { key: "saved", label: "Saved" },
-  { key: "applied", label: "Applied" },
 ];
 
-// Three tiles: one column on phones, three from 734px up.
+// Two tiles: strong matches and saved jobs.
 export function StatsBar({ stats }: { stats: DashboardStats }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 gap-3">
       {TILES.map(({ key, label }) => (
         <div key={key} className="card p-4 shadow-[var(--shadow-lg)] sm:p-5">
           <div className="text-[26px] font-extrabold leading-none sm:text-[32px]">{stats[key]}</div>

@@ -48,8 +48,8 @@ export const FUNCTION_DECLARATIONS = [
   },
   {
     name: "list_my_jobs",
-    description: "Tracker: the student's saved / applied / not_interested jobs.",
-    parameters: { type: "OBJECT", properties: { decision: { type: "STRING", description: "saved, applied or not_interested" } }, required: ["decision"] },
+    description: "Tracker: the student's saved or not_interested jobs.",
+    parameters: { type: "OBJECT", properties: { decision: { type: "STRING", description: "saved or not_interested" } }, required: ["decision"] },
   },
   { name: "save_job", description: "Tracker: add a job to the student's Saved list. Only when the student asks to save.", parameters: { type: "OBJECT", properties: { job_id: { type: "INTEGER" } }, required: ["job_id"] } },
   { name: "hide_job", description: "Tracker: mark a job not interested. Only when the student asks.", parameters: { type: "OBJECT", properties: { job_id: { type: "INTEGER" } }, required: ["job_id"] } },

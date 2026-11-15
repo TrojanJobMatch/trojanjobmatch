@@ -8,7 +8,6 @@ import type { JobFilters } from "@/lib/dashboard/types";
 const TABS: { value: JobFilters["decision"]; label: string }[] = [
   { value: "all", label: "All jobs" },
   { value: "saved", label: "Saved" },
-  { value: "applied", label: "Applied" },
   { value: "not_interested", label: "Not interested" },
 ];
 

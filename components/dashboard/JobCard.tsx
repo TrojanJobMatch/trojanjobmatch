@@ -9,7 +9,6 @@ import type { DashboardJob, Decision } from "@/lib/dashboard/types";
 
 const ACTIONS: { value: Decision; label: string }[] = [
   { value: "saved", label: "Save" },
-  { value: "applied", label: "Applied" },
   { value: "not_interested", label: "Not interested" },
 ];
 
