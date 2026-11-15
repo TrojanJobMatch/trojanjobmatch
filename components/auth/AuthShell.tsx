@@ -3,9 +3,14 @@ import type { ReactNode } from "react";
 import { BrandImage } from "@/components/brand/BrandImage";
 
 // Split design for /login and /signup: a cardinal brand panel on
-// the left (wordmark, big headline, feature pills) and the form on a white
-// panel on the right. Below 734px the panels stack and the headline shrinks.
-const PILLS = ["Eligibility check", "Fit score 0–100", "AI job agents"];
+// the left (wordmark, big headline, the moments it's built for) and the form
+// on a white panel on the right. Below 734px the panels stack and the
+// headline shrinks.
+const MOMENTS = [
+  { ask: "No advisor slot before the deadline?", answer: "Get reviewed tonight." },
+  { ask: "Long line at the career fair?", answer: "Show up already checked." },
+  { ask: "Not sure it fits this job?", answer: "See what's proven and what's missing." },
+];
 
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
@@ -44,16 +49,14 @@ export function AuthShell({ title, subtitle, children }: {
             Every Trojan deserves the <span className="text-[var(--gold)]">right match.</span>
           </h2>
           <p className="mt-6 max-w-[460px] text-[16px] leading-relaxed text-white/90 sm:text-[18px]">
-            Any job posting. Your resume. One honest answer on whether you qualify and how to get closer.
+            Your resume, read the way a recruiter reads it, at any hour. Then take it to your Career Center advisor.
           </p>
         </div>
-        <ul className="relative z-10 hidden flex-wrap gap-3 sm:flex">
-          {PILLS.map((pill) => (
-            <li
-              key={pill}
-              className="rounded-full border-2 border-[var(--gold)] px-4 py-2 text-[14px] font-bold text-[var(--gold)]"
-            >
-              {pill}
+        <ul className="relative z-10 hidden max-w-[480px] flex-col gap-2 sm:flex">
+          {MOMENTS.map((m) => (
+            <li key={m.ask} className="border-l-4 border-[var(--gold)] pl-3 text-[15px] leading-snug">
+              <span className="font-bold text-[var(--gold)]">{m.ask}</span>{" "}
+              <span className="text-white/90">{m.answer}</span>
             </li>
           ))}
         </ul>
