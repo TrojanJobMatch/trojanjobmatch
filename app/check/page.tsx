@@ -195,7 +195,7 @@ export default function CheckPage() {
                       {p.company ? ` · ${p.company}` : ""}
                     </span>
                     <span className="shrink-0 text-[var(--muted)]">
-                      {p.verdict ?? "…"} {p.score !== null ? `· ${p.score}` : ""}
+                      {p.verdict ?? "…"}
                     </span>
                   </button>
                 </li>

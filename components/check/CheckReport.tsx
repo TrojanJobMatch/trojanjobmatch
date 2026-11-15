@@ -70,7 +70,6 @@ export function CheckReport({ state }: { state: CheckState }) {
             <Badge {...VERDICT[judge.verdict]} />
             {reviewer && <Badge {...VOICE[reviewer.voice.rating]} />}
             <Badge {...STUFF[judge.stuffing]} />
-            <span className="ml-auto self-center text-[14px] text-[var(--muted)]">Recruiter-screen score: <strong className="text-black">{judge.score}</strong>/100</span>
           </div>
         </section>
       )}
@@ -196,7 +195,7 @@ export function CheckReport({ state }: { state: CheckState }) {
             {([["🧑‍💼 Recruiter (skeptic)", debate.recruiter], ["🤝 Advocate (your side)", debate.advocate]] as const).map(([name, side]) => (
               <div key={name} className="rounded-xl bg-[var(--background)] p-3">
                 <p className="text-[14px] font-semibold">
-                  {name} <span className="font-normal text-[var(--muted)]">· {side.score}/100</span>
+                  {name}
                 </p>
                 <ul className="mt-2 flex flex-col gap-2">
                   {side.claims.map((c: Claim) => (

@@ -82,16 +82,16 @@ export function normalizeResume(raw: unknown): ResumeData {
 // Ten looks modeled on the most-used Overleaf resume templates (our own
 // HTML versions, not copies of their LaTeX).
 export const RESUME_STYLES = [
-  { key: "jake", name: "Jake's Resume", note: "The classic tech resume: centered name, small-caps ruled headings." },
-  { key: "faang", name: "FAANGPath", note: "Big-tech favourite. Bold ruled headings, tight and ATS-clean." },
-  { key: "awesome", name: "Awesome-CV", note: "Light and bold name, colored section titles, polished." },
-  { key: "moderncv", name: "ModernCV", note: "Name left, contact right, accent bars on each section." },
-  { key: "rendercv", name: "RenderCV", note: "Engineering style with blue accents and clean rules." },
-  { key: "deedy", name: "Deedy", note: "Two columns: education and skills on the left, work on the right." },
-  { key: "altacv", name: "AltaCV", note: "Two columns with a tinted sidebar for skills and links." },
-  { key: "harvard", name: "Harvard", note: "Formal business format: serif, education first, centered headings." },
-  { key: "minimal", name: "Minimal", note: "Lots of white space and light headings. Calm and readable." },
-  { key: "compact", name: "Compact", note: "Skills first, tight spacing. Fits the most on one page." },
+  { key: "jake", name: "Template 1" },
+  { key: "faang", name: "Template 2" },
+  { key: "awesome", name: "Template 3" },
+  { key: "moderncv", name: "Template 4" },
+  { key: "rendercv", name: "Template 5" },
+  { key: "deedy", name: "Template 6" },
+  { key: "altacv", name: "Template 7" },
+  { key: "harvard", name: "Template 8" },
+  { key: "minimal", name: "Template 9" },
+  { key: "compact", name: "Template 10" },
 ] as const;
 export type ResumeStyle = (typeof RESUME_STYLES)[number]["key"];
 

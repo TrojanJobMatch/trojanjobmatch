@@ -25,15 +25,19 @@ function List({ title, items, icon }: { title: string; items: string[]; icon: st
 
 export function AnalysisPanel({ analysis }: { analysis: Analysis }) {
   const badge = ELIGIBLE[analysis.eligible];
-  const ring = `conic-gradient(var(--cardinal) ${analysis.fit * 3.6}deg, #ececec 0deg)`;
+  // A fit estimate in words, never a number or a promise.
+  const fit =
+    analysis.fit >= 70
+      ? { label: "Strong fit", cls: "bg-[#e6f4ea] text-[#1a7f37]" }
+      : analysis.fit >= 40
+        ? { label: "Possible fit", cls: "bg-[#fff4d6] text-[#7a5a00]" }
+        : { label: "Long shot", cls: "bg-[#fdecea] text-[var(--danger)]" };
   return (
     <div className="rounded-2xl bg-[var(--background)] p-4">
       <div className="flex items-center gap-4">
-        <div className="flex h-[64px] w-[64px] shrink-0 items-center justify-center rounded-full" style={{ background: ring }}>
-          <span className="flex h-[50px] w-[50px] items-center justify-center rounded-full bg-white text-[18px] font-bold">{analysis.fit}</span>
-        </div>
+        <span className={`shrink-0 rounded-full px-3 py-1.5 text-[14px] font-bold ${fit.cls}`}>{fit.label}</span>
         <div className="min-w-0">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.05em] text-[var(--muted)]">Analyst agent · AI fit</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.05em] text-[var(--muted)]">Analyst agent · fit estimate</p>
           <p className="text-[15px] font-semibold leading-snug">{analysis.verdict}</p>
           <span className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${badge.cls}`} title={analysis.eligibility_reason}>
             {badge.label}

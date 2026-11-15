@@ -160,16 +160,18 @@ export default function ResumeBuilderPage() {
         </div>
       </header>
 
-      <main className="no-print mx-auto w-full max-w-[1240px] px-4 pb-10 pt-10 sm:px-6 sm:pt-12">
-        <h1 className="font-display text-[28px] uppercase leading-none sm:text-[40px]">
+      <main className="no-print mx-auto w-full max-w-[1240px] px-4 pb-8 pt-6 sm:px-6 sm:pt-8">
+        <h1 className="font-display text-[28px] uppercase leading-none sm:text-[36px]">
           Build your <span className="text-[var(--cardinal)]">resume</span>
         </h1>
-        <p className="mt-2 text-[16px] text-[var(--muted)]">
-          {step === "style" ? "Step 1 of 2: pick a style. You can switch any time." : "Step 2 of 2: check your details, let the Resume Coach polish them, then download."}
+        <p className="mt-2 text-[15px] text-[var(--muted)]">
+          {step === "style" ? "Step 1 of 2: pick a template. You can switch any time." : "Step 2 of 2: check your details, let the Resume Coach polish them, then download."}
         </p>
 
         {step === "style" ? (
-          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          // Both rows of 5 fit on one screen: the grid's width follows the
+          // screen height (each page keeps its US Letter shape).
+          <div className="mx-auto mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:max-w-[calc(193svh-560px)] lg:grid-cols-5">
             {RESUME_STYLES.map((s) => (
               <button
                 key={s.key}
@@ -185,10 +187,9 @@ export default function ResumeBuilderPage() {
                     <ResumeDocument data={!loading && hasContent(data) ? data : SAMPLE_RESUME} style={s.key} />
                   </ScaledPage>
                 </div>
-                <div className="flex flex-1 flex-col p-3">
-                  <p className="font-heading text-[15px]">{s.name}</p>
-                  <p className="mt-1 text-[12.5px] leading-snug text-[var(--muted)]">{s.note}</p>
-                  <span className="mt-2 text-[13px] font-semibold text-[var(--cardinal)] opacity-0 transition group-hover:opacity-100">Use this style →</span>
+                <div className="flex items-center justify-between gap-2 px-3 py-2">
+                  <p className="font-heading text-[14px]">{s.name}</p>
+                  <span className="text-[12px] font-semibold text-[var(--cardinal)] opacity-0 transition group-hover:opacity-100">Use →</span>
                 </div>
               </button>
             ))}
@@ -198,7 +199,7 @@ export default function ResumeBuilderPage() {
             <div className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center gap-2">
                 <button type="button" onClick={() => setStep("style")} className="btn btn-secondary min-h-[40px] px-4 text-[14px]">
-                  Style: {RESUME_STYLES.find((s) => s.key === style)?.name} ▾
+                  {RESUME_STYLES.find((s) => s.key === style)?.name} ▾
                 </button>
                 <button type="button" disabled={busy !== null} onClick={refill} className="btn btn-secondary min-h-[40px] px-4 text-[14px]">
                   {busy === "fill" ? "Reading your resume…" : "↻ Fill from my uploaded resume"}
